@@ -2,7 +2,7 @@
 	"manifest_version": 2,
 	"name": "Dereferer Button",
 	"description": "Adds a button to switch whether HTTP referers should be sent or not.",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"background": {
 		"scripts": [
 			"background.js"
@@ -13,6 +13,8 @@
 		"default_title": "Dereferer"
 	},
 	"permissions": [
+		"http://*/*",
+		"https://*/*",
 		"webRequest",
 		"webRequestBlocking"
 	]
