@@ -1,3 +1,5 @@
+"use strict";
+
 function listener(details) {
 	return { requestHeaders: details.requestHeaders.filter(header => header.name.toLowerCase() !== "referer") };
 }
