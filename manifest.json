@@ -18,6 +18,7 @@
 		"default_title": "Dereferer"
 	},
 	"permissions": [
+		"storage",
 		"webRequest",
 		"webRequestBlocking"
 	],
