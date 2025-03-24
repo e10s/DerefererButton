@@ -1,6 +1,7 @@
 "use strict";
 
 const storageKey = "I am working";
+const rulesetId = "ruleset";
 
 /* Convenience functions */
 function onError(error) {
@@ -12,78 +13,64 @@ function peekStorage() {
 }
 /* */
 
-function listener(details) {
-	return { requestHeaders: details.requestHeaders.filter(header => header.name.toLowerCase() !== "referer") };
-}
+function setWorkingIcon() {
+	console.debug("Set working icon");
 
-function quitImpl() {
-	browser.action.setTitle({ title: "Dereferer, NOT Working" });
-	browser.action.setIcon({ path: "icons/deref-notworking-64.png" });
-
-	browser.webRequest.onBeforeSendHeaders.removeListener(listener);
-}
-
-function startImpl() {
 	browser.action.setTitle({ title: "Dereferer" });
 	browser.action.setIcon({ path: "icons/deref-working-64.png" });
-
-	browser.webRequest.onBeforeSendHeaders.addListener(
-		listener,
-		{ urls: ["http://*/*", "https://*/*"] },
-		["blocking", "requestHeaders"]
-	);
 }
+function setNotWorkingIcon() {
+	console.debug("Set not-working icon");
 
-function quit() {
-	console.debug("Quit");
-	browser.storage.local.set({ [storageKey]: false }).then(quitImpl, onError);
+	browser.action.setTitle({ title: "Dereferer, NOT Working" });
+	browser.action.setIcon({ path: "icons/deref-notworking-64.png" });
 }
 
 function start() {
 	console.debug("Start");
-	browser.storage.local.set({ [storageKey]: true }).then(startImpl, onError);
+
+	browser.declarativeNetRequest.updateEnabledRulesets({
+		enableRulesetIds: [rulesetId]
+	}).then(setWorkingIcon, onError);
+	browser.storage.local.set({ [storageKey]: true }).then(() => { }, onError);
+}
+
+function quit() {
+	console.debug("Quit");
+
+	browser.declarativeNetRequest.updateEnabledRulesets({
+		disableRulesetIds: [rulesetId]
+	}).then(setNotWorkingIcon, onError);
+	browser.storage.local.set({ [storageKey]: false }).then(() => { }, onError);
 }
 
 browser.action.onClicked.addListener(tab => {
 	function onGot(item) {
 		if (item[storageKey]) {
-			console.debug("Going to quit.");
-
 			quit();
 		}
 		else {
-			console.debug("Going to start.");
-
 			start();
 		}
 	}
 
-	console.debug("Button is clicked.");
+	console.debug("Clicked");
 	browser.storage.local.get(storageKey).then(onGot, onError);
 });
 
-function init() {
-	function onGot(item) {
-		if (storageKey in item) {
-			console.debug("Storage is being used.");
-
-			if (item[storageKey]) {
-				start();
-			}
-			else {
-				quit();
-			}
-		}
-		else {
-			console.debug("Storage is empty.");
-			start();
-		}
+function syncImpl(item) {
+	if (item[storageKey]) {
+		start();
 	}
-
-	console.debug("Background script is called.");
-	browser.storage.local.get(storageKey).then(onGot, onError);
+	else {
+		quit();
+	}
 }
 
-browser.runtime.onInstalled.addListener(() => { console.debug("onInstalled"); init(); });
-browser.runtime.onStartup.addListener(() => { console.debug("onStartup"); init(); });
-init();
+function sync() {
+	browser.storage.local.get(storageKey).then(syncImpl, onError);
+}
+
+browser.runtime.onInstalled.addListener(() => { console.debug("onInstalled"); sync(); });
+browser.runtime.onStartup.addListener(() => { console.debug("onStartup"); sync(); });
+sync();
