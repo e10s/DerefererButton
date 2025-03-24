@@ -84,4 +84,6 @@ function init() {
 	browser.storage.local.get(storageKey).then(onGot, onError);
 }
 
+browser.runtime.onInstalled.addListener(() => { console.debug("onInstalled"); init(); });
+browser.runtime.onStartup.addListener(() => { console.debug("onStartup"); init(); });
 init();
